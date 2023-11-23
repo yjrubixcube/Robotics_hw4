@@ -10,6 +10,12 @@ from tm_msgs.srv import *
 
 from sensor_msgs.msg import Image
 
+from cv2_bridge import CvBridge
+import cv2
+from math import sin, cos, pi, atan2
+
+BIN_THRESH = 200
+AREA_THRESH = 200
 
 class ImageSub(Node):
     def __init__(self, nodeName):
@@ -21,6 +27,40 @@ class ImageSub(Node):
         self.get_logger().info('Received image')
 
         # TODO (write your code here)
+        bridge = CvBridge()
+        image = bridge.imgmsg_to_cv2(data)
+
+        # process image to get brick centroids
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+        gauss_img = cv2.GaussianBlur(gray, (3, 3), 0, 0)
+
+        rt, bin_img = cv2.threshold(gauss_img, BIN_THRESH, 255, cv2.THRESH_BINARY)
+
+        contours, hiearchy = cv2.findContours(bin_img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        
+        # a dict to store cx, cy, angle
+        blocks = {}
+
+        for cnt in contours:
+            area = cv2.contourArea(cnt)
+            if area < AREA_THRESH:
+                # too small, probably noise or error
+                continue
+            M = cv2.moments(cnt)
+
+            # the centroid of the contour
+            cx = int(M["m10"]/M["m00"])
+            cy = int(M["m01"]/M["m00"])
+
+            # principal angle of the contour
+            angle = atan2(2*M["mu11"], M["mu20"]-M["mu02"])/2
+
+            blocks.cx =cx
+            blocks.cy = cy
+            blocks.angle = angle
+
+        
 
 def send_script(script):
     arm_node = rclpy.create_node('arm')
