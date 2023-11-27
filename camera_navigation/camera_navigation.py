@@ -10,3 +10,5 @@ camera_mtx_inv=inv(camera_mtx) # invesing the matrix is required (see the defini
 
 line_vec=camera_mtx_inv@np.ndarray([x,y,1]) # 畫素x,y 只能解出一條射線，這是射線的向量方向（以相機座標系來看）
 
+rotation_matrix=np.array(4,4) # I don't know the meaning of abc, so 
+
