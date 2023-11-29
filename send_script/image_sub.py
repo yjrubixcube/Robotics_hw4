@@ -10,12 +10,29 @@ from tm_msgs.srv import *
 
 from sensor_msgs.msg import Image
 
-from cv2_bridge import CvBridge
 import cv2
-from math import sin, cos, pi, atan2
+from cv_bridge import CvBridge
+import numpy as np
+# from home.robot.workspace import arm_mode
+arm_mode = "C"
 
-BIN_THRESH = 200
-AREA_THRESH = 200
+
+
+CORNER_COUNT = 6, 8
+SHRINK_CONST = 1
+
+
+
+# termination criteria
+criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
+
+objp = np.zeros((CORNER_COUNT[0]*CORNER_COUNT[1],3), np.float32)
+objp[:,:2] = np.mgrid[0:CORNER_COUNT[0],0:CORNER_COUNT[1]].T.reshape(-1,2)
+
+objpoints = [] # 3d point in real world space
+imgpoints = [] # 2d points in image plane.
+
+
 
 class ImageSub(Node):
     def __init__(self, nodeName):
@@ -27,40 +44,38 @@ class ImageSub(Node):
         self.get_logger().info('Received image')
 
         # TODO (write your code here)
+        # name=self.get_name()
+        # print(name, self.get_parameter(name))
         bridge = CvBridge()
         image = bridge.imgmsg_to_cv2(data)
+        # if arm_mode == "CC":
+        #     # camera calibration mode
+            # gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+            # ret, corners = cv2.findChessboardCorners(gray, CORNER_COUNT, None)
+        #     # print(ret)
+        #     # print(corners)
+        #     if ret == True:
+        #         objpoints.append(objp)
+# 
+        #         corners2 = cv2.cornerSubPix(gray, corners, (11, 11), (-1, -1), criteria)
+        #         imgpoints.append(corners2)
+            
+        #     ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, gray.shape[::-1], None, None)
 
-        # process image to get brick centroids
-        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-
-        gauss_img = cv2.GaussianBlur(gray, (3, 3), 0, 0)
-
-        rt, bin_img = cv2.threshold(gauss_img, BIN_THRESH, 255, cv2.THRESH_BINARY)
-
-        contours, hiearchy = cv2.findContours(bin_img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        #     newcameramtx, roi=cv2.getOptimalNewCameraMatrix(mtx,dist,gray.shape[::-1],10,gray.shape[::-1])
         
-        # a dict to store cx, cy, angle
-        blocks = {}
+        #     dst = cv2.undistort(gray, mtx, dist, None, newcameramtx)
+            
+        #     cv2.imshow("undis", dst)
+        #     cv2.imshow("og", gray)
+        #     cv2.waitKey(0)
+        #     cv2.destroyAllWindows()
+        # elif arm_mode == "PICK":
+        #     # pick up
+        #     pass
+        # cv2.imshow("image", image)
+        # cv2.waitKey(0)
 
-        for cnt in contours:
-            area = cv2.contourArea(cnt)
-            if area < AREA_THRESH:
-                # too small, probably noise or error
-                continue
-            M = cv2.moments(cnt)
-
-            # the centroid of the contour
-            cx = int(M["m10"]/M["m00"])
-            cy = int(M["m01"]/M["m00"])
-
-            # principal angle of the contour
-            angle = atan2(2*M["mu11"], M["mu20"]-M["mu02"])/2
-
-            blocks.cx =cx
-            blocks.cy = cy
-            blocks.angle = angle
-
-        
 
 def send_script(script):
     arm_node = rclpy.create_node('arm')
