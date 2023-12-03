@@ -54,33 +54,19 @@ def main(args=None):
     # For right arm: targetP1 = "230.00, 230, 730, -180.00, 0.0, 135.00"
     # For left  arm: targetP1 = "350.00, 350, 730, -180.00, 0.0, 135.00"
     targetP1 = "230.00, 230, 730, -180.00, 0.0, 135.00"
-    targetP2 = ""
-    # 225.92159602 269.2646193    0.        
+    # targetP2 = "300.00, 100, 500, -180.00, 0.0, 135.00"
+    targetP3 = "300.00, 100, 500, 0.00, 0.0, 0.00"
+    targetP4 = "300.00, 100, 500, 90.00, 0.0, 0.00"
+    targetP5 = "300.00, 100, 500, 90.00, 90.0, 0.00"
+    targetP6 = "300.00, 100, 500, 0.00, 90.0, 0.00"
     script1 = "PTP(\"CPP\","+targetP1+",100,200,0,false)"
-    script2 = "PTP(\"CPP\","+targetP2+",100,200,0,false)"
-    while 1:
-        send_script(script1)
-        time.sleep(1)
-        send_script("Vision_DoJob(job1)")
-        cv2.waitKey(1)
-        recalibrate = input("Check img_sub tab. Recalibrate? (y/n): ")
-        if recalibrate == "n":
-            break
-    input("Remove checker board and put blocks. Press any key to continue")
-    while 1:
-        send_script("Vision_DoJob(job1)")
-        cv2.waitKey(1)
-        x = float(input("x: "))
-        y = float(input("y: "))
-        z = float(input("z(110 for picking blocks): "))
-        theta = float(input("t: "))
-        if x == 0 and y == 0:
-            break
-        targetP2 = f"{x}, {y}, {z}, -180.00, 0.0, {theta}"
-        script2 = "PTP(\"CPP\","+targetP2+",100,200,0,false)"
-        send_script(script2)
-        time.sleep(1)
-    # time.sleep(5)
+    # script2 = "PTP(\"CPP\","+targetP2+",100,200,0,false)"
+    script3 = "PTP(\"CPP\","+targetP3+",100,200,0,false)"
+    script4 = "PTP(\"CPP\","+targetP4+",100,200,0,false)"
+    script5 = "PTP(\"CPP\","+targetP5+",100,200,0,false)"
+    script6 = "PTP(\"CPP\","+targetP6+",100,200,0,false)"
+    send_script(script1)
+    time.sleep(1)
     # send_script(script2)
     # time.sleep(1)
     # send_script(script3)
@@ -94,10 +80,10 @@ def main(args=None):
 
 # What does Vision_DoJob do? Try to use it...
 # -------------------------------   ------------------
-    # send_script("Vision_DoJob(job1)")
-    # cv2.waitKey(1)
-    # send_script("Vision_DoJob(job1)")
-    # cv2.waitKey(1)
+    send_script("Vision_DoJob(CC)")
+    cv2.waitKey(1)
+    send_script("Vision_DoJob(AA)")
+    cv2.waitKey(1)
     # arm_mode = "PICK"
     # for i in range(100):        
     #     send_script("Vision_DoJob(job1)")
