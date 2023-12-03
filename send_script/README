@@ -1,0 +1,7 @@
+calibrate:
+    run the calibrate.py
+    and copy the camera matrix to the hw4.py
+
+hw4.py:
+    run the hw4.py
+    the arm should automatically pick all the bricks to a fixed position.

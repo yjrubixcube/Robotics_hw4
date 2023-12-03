@@ -19,24 +19,6 @@ from math import atan2, sin, cos, pi, tan
 # from home.robot.workspace import arm_mode
 arm_mode = "C"
 
-CORNER_COUNT = 6, 8
-SHRINK_CONST = 1
-BIN_THRESH = 200
-AREA_THRESH = 200
-
-
-
-# termination criteria
-criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
-
-objp = np.zeros((CORNER_COUNT[0]*CORNER_COUNT[1],3), np.float32)
-objp[:,:2] = np.mgrid[0:CORNER_COUNT[0],0:CORNER_COUNT[1]].T.reshape(-1,2)
-
-objpoints = [] # 3d point in real world space
-imgpoints = [] # 2d points in image plane.
-
-calibration_mode = True
-
 class ImageSub(Node):
     def __init__(self, nodeName):
         super().__init__(nodeName)
@@ -56,7 +38,8 @@ class ImageSub(Node):
         block_centers=find_blocks(image)
         pickup_blocks(block_centers)
 
-
+BIN_THRESH = 200
+AREA_THRESH = 200
 def find_blocks(image):
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     gray_copy=gray.copy()
@@ -83,9 +66,11 @@ def find_blocks(image):
     return block_centers
 
 camera_mtx=np.array([[3.45192788e+03, 0.00000000e+00, 1.31152653e+03],\
-                        [0.00000000e+00, 4.07429644e+03, 2.26852567e+03],\
-                        [0.00000000e+00, 0.00000000e+00, 1.00000000e+00]]) # get this from calibrate camera
+                    [0.00000000e+00, 4.07429644e+03, 2.26852567e+03],\
+                    [0.00000000e+00, 0.00000000e+00, 1.00000000e+00]]) # get this from calibrate camera
 camera_mtx_inv=inv(camera_mtx) # invesing the matrix is required (see the definition of camera matrix)
+
+camera_off_x=0;camera_off_y=0;camera_off_z=0 # the coordinate is the gripper coordinate
 
 def camera_navigation(block_center):
     x=block_center[0];y=block_center[1]
@@ -150,19 +135,29 @@ def camera_navigation(block_center):
 block_height=30
 def pickup_blocks(block_centers):
     target_height=0
+    grip(0.0)
     for block_center in block_centers:
         block_pos=camera_navigation(block_center)
+        ## move upwards by 100
+        target_block_upward=f"{block_pos[0]}, {block_pos[1]}, 150, 0, {((180/np.pi)*block_center[2])+45}"
+        move_to_target_block_upward=f"PTP(\"CPP\",{target_block_upward},100,200,0,false)"
+        send_script(move_to_target_block_upward)
+        ## move down to grip
         target_block=f"{block_pos[0]}, {block_pos[1]}, 100, 0, {((180/np.pi)*block_center[2])+45}"
         move_to_target_block=f"PTP(\"CPP\",{target_block},100,200,0,false)"
         send_script(move_to_target_block)
         grip(1.0)
+        ## move upwards by 100
+        stack_pos_upward=f"400,400,{150+target_height},100,0,135"
+        move_upward = "PTP(\"CPP\","+stack_pos_upward+",100,200,0,false)"
+        send_script(move_upward)
+        ## move down to place
         stack_pos=f"400,400,{100+target_height},100,0,135"
         target_height+=block_height
         move_to_stack_pos=f"PTP(\"CPP\",{stack_pos},100,200,0,false)"
         send_script(move_to_stack_pos)
         grip(0.0)
         ## move upwards by 100
-        stack_pos_upward=f"400,400,{200+target_height},100,0,135"
         move_upward = "PTP(\"CPP\","+stack_pos_upward+",100,200,0,false)"
         send_script(move_upward)
     
@@ -195,8 +190,8 @@ def grip(state):
 
 def main(args=None):
     rclpy.init(args=args)
-    target_photo = "230.00, 230, 730, -180.00, 0.0, 135.00"
-    move_to_photo_pos = "PTP(\"CPP\","+target_photo+",100,200,0,false)"
+    photo_pos = "230.00, 230, 730, -180.00, 0.0, 135.00"
+    move_to_photo_pos = "PTP(\"CPP\","+photo_pos+",100,200,0,false)"
     send_script(move_to_photo_pos)
     send_script("Vision_DoJob(job1)")
     node = ImageSub('image_sub')
