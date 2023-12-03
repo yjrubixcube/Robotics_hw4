@@ -1,7 +1,11 @@
 calibrate:
-    run the calibrate.py
+    run calibrate.py
     and copy the camera matrix to the hw4.py
 
 hw4.py:
-    run the hw4.py
+    PLEASE setup all the offsets
+        line68:CAMERA_MTX # camera matrix
+        line73:CAMERA_OFFSET # the camera offset, relative to the gripper xyz, you are supposed to fine tune it
+        line136:BLOCK_HEIGHT # the height of the block in mm
+    then run hw4.py
     the arm should automatically pick all the bricks to a fixed position.

@@ -65,12 +65,12 @@ def find_blocks(image):
         block_centers.append((cx, cy, angle))
     return block_centers
 
-camera_mtx=np.array([[3.45192788e+03, 0.00000000e+00, 1.31152653e+03],\
+CAMERA_MTX=np.array([[3.45192788e+03, 0.00000000e+00, 1.31152653e+03],\
                     [0.00000000e+00, 4.07429644e+03, 2.26852567e+03],\
                     [0.00000000e+00, 0.00000000e+00, 1.00000000e+00]]) # get this from calibrate camera
-camera_mtx_inv=inv(camera_mtx) # invesing the matrix is required (see the definition of camera matrix)
+camera_mtx_inv=inv(CAMERA_MTX) # invesing the matrix is required (see the definition of camera matrix)
 
-camera_off_x=0;camera_off_y=0;camera_off_z=0 # the coordinate is the gripper coordinate
+CAMERA_OFFSET=np.array((0,0,0))# the coordinate is the gripper coordinate
 
 def camera_navigation(block_center):
     x=block_center[0];y=block_center[1]
@@ -110,29 +110,31 @@ def camera_navigation(block_center):
 
     # rotation_matrix@line_vec is line_vec transformed to the base coordinate
     line_vec_base=rotation_matrix@line_vec
+    # camera_offset_base
+    camera_offset_base=rotation_matrix@CAMERA_OFFSET
 
     # check the xyz in the system is camera xyz or the gripper xyz
     # THEY are DIFFERENT!
 
     # we use camera xyz here
-    cam_x=0;cam_y=0;cam_z=0
-    cam_x=230
-    cam_y=230
-    cam_z=730
-    cam_pos=np.array([cam_x,cam_y,cam_z])
+    grip_x=230
+    grip_y=230
+    grip_z=730
+    grip_pos=np.array([grip_x,grip_y,grip_z])
 
     # table_z is the z value of the table plane, I set it to 0
     table_z=0
 
     # 射線公式不是 "點+t倍向量" 嗎? 這裡在解t
     # 因為只跟桌面求解，用z座標就能解t
-    t=(table_z-cam_z)/line_vec_base[2]
+    t=(table_z-grip_z-camera_offset_base[2])/line_vec_base[2]
 
     # 之後就是代公式了
-    block_pos=cam_pos+t*line_vec_base # block_pos就是積木位置 到這裡已經被計算出來
+    block_pos=grip_pos+camera_offset_base+t*line_vec_base # block_pos就是積木位置 到這裡已經被計算出來
     return block_pos
 
-block_height=30
+BLOCK_HEIGHT=30
+
 def pickup_blocks(block_centers):
     target_height=0
     grip(0.0)
@@ -153,7 +155,7 @@ def pickup_blocks(block_centers):
         send_script(move_upward)
         ## move down to place
         stack_pos=f"400,400,{100+target_height},100,0,135"
-        target_height+=block_height
+        target_height+=BLOCK_HEIGHT
         move_to_stack_pos=f"PTP(\"CPP\",{stack_pos},100,200,0,false)"
         send_script(move_to_stack_pos)
         grip(0.0)

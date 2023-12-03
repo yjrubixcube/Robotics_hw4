@@ -95,6 +95,7 @@ def main(args=None):
     for i in range(IMG_NUM):
         send_script("Vision_DoJob(job1)")
         node = ImageSub('image_sub')
+        print(f"press any key to get another photo {i+1}/IMG_NUM")
         cv2.waitKey(0)
         cv2.destroyAllWindows()
     print(calibrate(imgs))
